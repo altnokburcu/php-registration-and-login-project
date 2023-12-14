@@ -1,0 +1,52 @@
+version: '3'
+services:
+  php:
+    container_name: php-apache
+    build:
+      context: ./containers/php
+      dockerfile: Dockerfile
+    network_mode: bridge
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    volumes:
+      - ./app:/var/www/html/
+    ports:
+      - "81:80"
+  mysql:
+    build:
+      context: ./containers/mysql
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: 'secret'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'secret'
+      MYSQL_DATABASE: 'mvclogin'
+    network_mode: bridge
+    volumes:
+      - ./containers/mysql/config/my-custom.cnf:/etc/mysql/conf.d/my-custom.cnf
+      - ./db:/var/lib/mysql
+      - ./db_backups:/home/db_backups
+    ports:
+      - "3308:3308"
+    restart: always
+  phpmyadmin:
+    image: arm64v8/phpmyadmin
+    links:
+      - mysql
+    network_mode: bridge
+    environment:
+      PMA_HOST: 'mysql'
+      PMA_PORT: '3308'
+      PMA_USER: 'root'
+      PMA_PASSWORD: 'secret'
+      MYSQL_ROOT_PASSWORD: 'secret'
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - "8081:80"
+volumes:
+  ch-sync:
+    external: true
